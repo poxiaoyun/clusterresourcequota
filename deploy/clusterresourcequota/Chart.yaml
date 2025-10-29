@@ -1,0 +1,9 @@
+apiVersion: v2
+appVersion: 0.0.0
+name: clusterresourcequota
+description: A Helm chart for ClusterResourceQuota Admission
+version: 0.0.0
+dependencies:
+  - name: common
+    version: 2.x.x
+    repository: oci://registry-1.docker.io/bitnamicharts

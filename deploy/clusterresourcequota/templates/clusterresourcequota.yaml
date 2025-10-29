@@ -1,0 +1,232 @@
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "clusterresourcequota.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: clusterresourcequota
+  {{- if or .Values.clusterresourcequota.deploymentAnnotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.clusterresourcequota.deploymentAnnotations .Values.commonAnnotations) "context" .) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.clusterresourcequota.replicaCount }}
+  {{- if .Values.clusterresourcequota.updateStrategy }}
+  strategy: {{- toYaml .Values.clusterresourcequota.updateStrategy | nindent 4 }}
+  {{- end }}
+  {{- $podLabels := include "common.tplvalues.merge" (dict "values" (list .Values.clusterresourcequota.podLabels .Values.commonLabels) "context" .) }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
+      app.kubernetes.io/component: clusterresourcequota
+  template:
+    metadata:
+      {{- if .Values.clusterresourcequota.podAnnotations }}
+      annotations: {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.podAnnotations "context" $) | nindent 8 }}
+      {{- end }}
+      labels: {{- include "common.labels.standard" ( dict "customLabels" $podLabels "context" $ ) | nindent 8 }}
+        app.kubernetes.io/component: clusterresourcequota
+    spec:
+      {{- include "clusterresourcequota.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ template "clusterresourcequota.serviceAccountName" . }}
+      {{- if .Values.clusterresourcequota.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.clusterresourcequota.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.clusterresourcequota.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.clusterresourcequota.podAffinityPreset "component" "api" "customLabels" $podLabels "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.clusterresourcequota.podAntiAffinityPreset "component" "api" "customLabels" $podLabels "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.clusterresourcequota.nodeAffinityPreset.type "key" .Values.clusterresourcequota.nodeAffinityPreset.key "values" .Values.clusterresourcequota.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.clusterresourcequota.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.clusterresourcequota.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.clusterresourcequota.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.clusterresourcequota.priorityClassName }}
+      priorityClassName: {{ .Values.clusterresourcequota.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.clusterresourcequota.schedulerName }}
+      schedulerName: {{ .Values.clusterresourcequota.schedulerName | quote }}
+      {{- end }}
+      {{- if .Values.clusterresourcequota.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.topologySpreadConstraints "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.clusterresourcequota.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.clusterresourcequota.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.clusterresourcequota.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.clusterresourcequota.terminationGracePeriodSeconds }}
+      {{- end }}
+      hostNetwork: false
+      initContainers:
+        {{- if .Values.clusterresourcequota.initContainers }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.initContainers "context" $) | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: clusterresourcequota
+          image: {{ template "clusterresourcequota.image" . }}
+          imagePullPolicy: {{ .Values.clusterresourcequota.image.pullPolicy }}
+          {{- if .Values.clusterresourcequota.containerSecurityContext.enabled }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.clusterresourcequota.containerSecurityContext "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.clusterresourcequota.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.command "context" $) | nindent 12 }}
+           {{- else }}
+          command:
+            - clusterresourcequota
+            - --v={{ .Values.clusterresourcequota.logLevel }}
+            - --probe-enabled
+            {{- if .Values.admissionWebhooks.enabled }}
+            - --webhook-enabled
+            - --webhook-certdir=/certs
+            - --webhook-addr=:{{ .Values.clusterresourcequota.containerPorts.https }}
+            {{- end }}
+            {{- if .Values.clusterresourcequota.metrics.enabled }}
+            - --metrics-enabled
+            - --metrics-addr=:{{ .Values.clusterresourcequota.containerPorts.metrics }}
+            {{- end }}
+            {{- if .Values.clusterresourcequota.extraArgs }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.extraArgs "context" $) | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.clusterresourcequota.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            {{- if .Values.clusterresourcequota.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.clusterresourcequota.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.clusterresourcequota.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- if .Values.clusterresourcequota.resources }}
+          resources: {{- toYaml .Values.clusterresourcequota.resources | nindent 12 }}
+          {{- else if ne .Values.clusterresourcequota.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.clusterresourcequota.resourcesPreset) | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: https
+              containerPort: {{ .Values.clusterresourcequota.containerPorts.https }}
+            - name: probe
+              containerPort: {{ .Values.clusterresourcequota.containerPorts.probe }}
+            {{- if .Values.clusterresourcequota.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.clusterresourcequota.containerPorts.metrics }}
+            {{- end }}
+            {{- if .Values.clusterresourcequota.extraContainerPorts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.extraContainerPorts "context" $) | nindent 12 }}
+            {{- end }}
+          {{- if .Values.clusterresourcequota.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else if .Values.clusterresourcequota.livenessProbe.enabled }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.clusterresourcequota.livenessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: probe
+          {{- end }}
+          {{- if .Values.clusterresourcequota.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else if .Values.clusterresourcequota.readinessProbe.enabled }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.clusterresourcequota.readinessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: probe
+          {{- end }}
+          {{- if .Values.clusterresourcequota.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.customStartupProbe "context" $) | nindent 12 }}
+          {{- else if .Values.clusterresourcequota.startupProbe.enabled }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.clusterresourcequota.startupProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /healthz
+              port: probe
+          {{- end }}
+          {{- if .Values.clusterresourcequota.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.admissionWebhooks.enabled }}
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+            {{- end }}
+            {{- if .Values.clusterresourcequota.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+        {{- if .Values.clusterresourcequota.sidecars }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.clusterresourcequota.sidecars "context" $) | nindent 8 }}
+        {{- end }}
+      volumes:
+        {{- if .Values.admissionWebhooks.enabled }}
+        - name: certs
+          secret:
+            secretName: {{ include "clusterresourcequota.webhook.secretName" . }}
+        {{- end }}
+        {{- if .Values.clusterresourcequota.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clusterresourcequota.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: clusterresourcequota
+  {{- if or .Values.clusterresourcequota.service.annotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.clusterresourcequota.service.annotations .Values.commonAnnotations) "context" .) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.clusterresourcequota.service.type }}
+  {{- if and .Values.clusterresourcequota.service.clusterIP (eq .Values.clusterresourcequota.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.clusterresourcequota.service.clusterIP }}
+  {{- end }}
+  {{- if .Values.clusterresourcequota.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.clusterresourcequota.service.sessionAffinity }}
+  {{- end }}
+  {{- if .Values.clusterresourcequota.service.sessionAffinityConfig }}
+  sessionAffinityConfig: {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.service.sessionAffinityConfig "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if or (eq .Values.clusterresourcequota.service.type "LoadBalancer") (eq .Values.clusterresourcequota.service.type "NodePort") }}
+  externalTrafficPolicy: {{ .Values.clusterresourcequota.service.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if and (eq .Values.clusterresourcequota.service.type "LoadBalancer") (not (empty .Values.clusterresourcequota.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{ .Values.clusterresourcequota.service.loadBalancerSourceRanges }}
+  {{- end }}
+  {{- if and (eq .Values.clusterresourcequota.service.type "LoadBalancer") (not (empty .Values.clusterresourcequota.service.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.clusterresourcequota.service.loadBalancerIP }}
+  {{- end }}
+  ports:
+    - name: https
+      port: {{ .Values.clusterresourcequota.service.ports.https }}
+      targetPort: https
+      {{- if and (or (eq .Values.clusterresourcequota.service.type "NodePort") (eq .Values.clusterresourcequota.service.type "LoadBalancer")) (not (empty .Values.clusterresourcequota.service.nodePorts.https)) }}
+      nodePort: {{ .Values.clusterresourcequota.service.nodePorts.https }}
+      {{- else if eq .Values.clusterresourcequota.service.type "ClusterIP" }}
+      nodePort: null
+      {{- end }}
+    {{- if .Values.clusterresourcequota.metrics.enabled }}
+    - name: metrics
+      port: {{ .Values.clusterresourcequota.service.ports.metrics }}
+      targetPort: metrics
+      {{- if and (or (eq .Values.clusterresourcequota.service.type "NodePort") (eq .Values.clusterresourcequota.service.type "LoadBalancer")) (not (empty .Values.clusterresourcequota.service.nodePorts.metrics)) }}
+      nodePort: {{ .Values.clusterresourcequota.service.nodePorts.metrics }}
+      {{- else if eq .Values.clusterresourcequota.service.type "ClusterIP" }}
+      nodePort: null
+      {{- end }}
+    {{- end }}
+    {{- if .Values.clusterresourcequota.service.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.clusterresourcequota.service.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  {{- $podLabels := include "common.tplvalues.merge" (dict "values" (list .Values.clusterresourcequota.podLabels .Values.commonLabels) "context" .) | fromYaml }}
+  selector: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: clusterresourcequota

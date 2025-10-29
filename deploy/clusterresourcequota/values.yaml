@@ -1,0 +1,75 @@
+global:
+  imageRegistry: ""
+  imageRepository: ""
+  imagePullSecrets: []
+  storageClass:
+  security:
+    # If you want to use insecure images, set this to true.
+    # This is not recommended for production environments.
+    # If you set this to true, you must also set the global.imagePullSecrets to an empty list.
+    # Otherwise, the image pull will fail.
+    allowInsecureImages: true
+  clusterDomain: cluster.local
+
+clusterresourcequota:
+  image:
+    registry: registry.cn-hangzhou.aliyuncs.com
+    repository: xiaoshiai/clusterresourcequota
+    tag: latest
+    pullPolicy: ""
+    pullSecrets: []
+  replicaCount: 1
+  logLevel: 1
+  extraArgs: []
+  nodeAffinityPreset: {}
+  podSecurityContext: {}
+  containerSecurityContext: {}
+  containerPorts:
+    https: 8443
+    probe: 8080
+    metrics: 9090
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 60
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    timeoutSeconds: 1
+    periodSeconds: 10
+    failureThreshold: 5
+    successThreshold: 1
+  startupProbe: {}
+  resources:
+    limits: {}
+    requests: {}
+  persistence: {}
+
+  serviceAccount:
+    name: ""
+
+  service:
+    ports:
+      https: 443
+      metrics: 9090
+    type: ClusterIP
+    nodePorts: {}
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+      namespace: ""
+      interval: ""
+      scrapeTimeout: ""
+      additionalLabels: {}
+      metricRelabelings: []
+      relabelings: []
+
+admissionWebhooks:
+  enabled: true
+  failurePolicy: Fail
+  useCertManager: false
+  secretName: ""
+  namespaceSelector:
+    # matchLabels: {}

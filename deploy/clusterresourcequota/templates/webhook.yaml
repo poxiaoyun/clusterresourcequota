@@ -1,0 +1,119 @@
+{{/*
+    If the user does not have cert-manager and is not providing a secret with the certificates, the chart needs to generate the secret
+  */}}
+{{- $ca := genCA "clusterresourcequota-ca" 3650 }}
+{{- $cert := genSignedCert (include "clusterresourcequota.fullname" .) nil (list (printf "%s.%s.svc" (include "clusterresourcequota.fullname" .) .Release.Namespace) (printf "%s.%s.svc.%s" (include "clusterresourcequota.fullname" .) .Release.Namespace .Values.clusterDomain)) 3650 $ca }}
+
+{{- if not .Values.admissionWebhooks.useCertManager }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "clusterresourcequota.webhook.secretName" . }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: clusterresourcequota
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ $cert.Cert | b64enc | quote }}
+  tls.key: {{ $cert.Key | b64enc | quote }}
+  ca.crt: {{ $ca.Cert | b64enc | quote }}
+{{- end }}
+---
+{{- if .Values.admissionWebhooks.enabled }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "clusterresourcequota.fullname" . }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: clusterresourcequota
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- if .Values.admissionWebhooks.useCertManager }}
+    cert-manager.io/inject-ca-from: {{ printf "%s/%s" .Release.Namespace (include "clusterresourcequota.webhook.secretName" .) }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+webhooks:
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      {{- if not .Values.admissionWebhooks.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "clusterresourcequota.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /validate
+    failurePolicy: {{ .Values.admissionWebhooks.failurePolicy }}
+    name: validate.resourcequota.xiaoshiai.cn
+    {{- if .Values.admissionWebhooks.namespaceSelector }}
+    namespaceSelector:
+      {{- toYaml .Values.admissionWebhooks.namespaceSelector | nindent 6 }}
+    {{- end }}
+    rules:
+    - apiGroups:
+        - ""
+      apiVersions:
+        - v1
+      operations:
+        - CREATE
+        - UPDATE
+      resources:
+        - pods
+    sideEffects: None
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      {{- if not .Values.admissionWebhooks.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "clusterresourcequota.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /validate-resourcequota-status
+    failurePolicy: {{ .Values.admissionWebhooks.failurePolicy }}
+    name: validate.clusterresourcequota.xiaoshiai.cn
+    {{- if .Values.admissionWebhooks.namespaceSelector }}
+    namespaceSelector:
+      {{- toYaml .Values.admissionWebhooks.namespaceSelector | nindent 6 }}
+    {{- end }}
+    objectSelector:
+      matchExpressions:
+        - key: clusterresourcequota.xiaoshiai.cn
+          operator: Exists
+    rules:
+    - apiGroups:
+        - "quota.xiaoshiai.cn"
+      apiVersions:
+        - v1
+      operations:
+        - UPDATE
+      resources:
+        - resourcequotas/status
+    sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ include "clusterresourcequota.fullname" . }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: clusterresourcequota
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- if .Values.admissionWebhooks.useCertManager }}
+    cert-manager.io/inject-ca-from: {{ printf "%s/%s" .Release.Namespace (include "clusterresourcequota.webhook.secretName" .) }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+{{- end }}

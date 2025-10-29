@@ -1,0 +1,13 @@
+/.idea
+__debug_bin*
+.DS_Store
+/.vscode
+/*.code-workspace
+/tmp/
+/bin/
+/vendor/
+*.tgz
+*.crt
+*.key
+*.tar
+/certs
