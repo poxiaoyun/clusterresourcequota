@@ -7,10 +7,10 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
-	"kubegems.io/library/log"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	quotav1 "xiaoshiai.cn/clusterresourcequota/apis/quota/v1"
+	"xiaoshiai.cn/common/log"
 )
 
 type CacheSyner struct {
@@ -28,7 +28,7 @@ func (c *CacheSyner) Start(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			if err := c.SyncOnce(ctx); err != nil {
-				log.FromContextOrDiscard(ctx).Error(err, "Sync ResourceQuotaCache")
+				log.FromContext(ctx).Error(err, "Sync ResourceQuotaCache")
 			}
 		case <-ctx.Done():
 			return nil

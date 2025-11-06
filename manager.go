@@ -18,7 +18,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 	"k8s.io/controller-manager/pkg/informerfactory"
-	liblog "kubegems.io/library/log"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -31,6 +30,7 @@ import (
 	thisclientset "xiaoshiai.cn/clusterresourcequota/generated/clientset/versioned"
 	thisinformers "xiaoshiai.cn/clusterresourcequota/generated/informers/externalversions"
 	"xiaoshiai.cn/common"
+	liblog "xiaoshiai.cn/common/log"
 	libnet "xiaoshiai.cn/common/net"
 )
 
@@ -95,7 +95,7 @@ func NewDefaultOptions() *Options {
 }
 
 func Run(ctx context.Context, options *Options) error {
-	log.SetLogger(liblog.Logger)
+	log.SetLogger(liblog.DefaultLogger)
 	setupLog := log.Log.WithName("setup")
 
 	managerOptions := manager.Options{
