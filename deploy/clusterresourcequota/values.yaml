@@ -72,4 +72,6 @@ admissionWebhooks:
   useCertManager: false
   secretName: ""
   namespaceSelector:
-    # matchLabels: {}
+    matchExpressions:
+      - key: "app.xiaoshiai.cn/tenant"
+        operator: Exists
