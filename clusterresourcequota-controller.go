@@ -6,6 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -108,6 +109,10 @@ func (rq *ClusterResourceQuotaReconciler) syncResourceQuota(ctx context.Context,
 	}
 
 	totalUsage := corev1.ResourceList{}
+	// init all resource quantities to zero
+	for resourceName := range clusterResourceQuota.Spec.Hard {
+		totalUsage[resourceName] = *resource.NewQuantity(0, resource.DecimalSI)
+	}
 	namespaceUsage := []quotav1.NamespaceResourceQuota{}
 
 	var errs []error
