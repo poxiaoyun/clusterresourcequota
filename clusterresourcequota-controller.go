@@ -115,7 +115,7 @@ func (rq *ClusterResourceQuotaReconciler) syncResourceQuota(ctx context.Context,
 		// create or update resource quota in the namespace
 		resourceQuota := &quotav1.ResourceQuota{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      GetNamespaceResourceQuotaName(clusterResourceQuota.Name),
+				Name:      clusterResourceQuota.Name,
 				Namespace: ns.Name,
 			},
 		}
@@ -160,8 +160,4 @@ func (rq *ClusterResourceQuotaReconciler) selectedNamespaces(ctx context.Context
 		}
 	}
 	return matchedNamespaces, nil
-}
-
-func GetNamespaceResourceQuotaName(name string) string {
-	return "clusterresourcequota." + name
 }
