@@ -68,6 +68,8 @@ webhooks:
         - UPDATE
       resources:
         - pods
+        - persistentvolumeclaims
+        - services
     sideEffects: None
   - admissionReviewVersions:
       - v1

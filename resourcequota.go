@@ -18,13 +18,17 @@ import (
 	"k8s.io/controller-manager/pkg/informerfactory"
 	pkgcontroller "k8s.io/kubernetes/pkg/controller"
 	resourcequotacontroller "k8s.io/kubernetes/pkg/controller/resourcequota"
+	"k8s.io/kubernetes/pkg/quota/v1/evaluator/core"
 	quotainstall "k8s.io/kubernetes/pkg/quota/v1/install"
 	thisquotav1 "xiaoshiai.cn/clusterresourcequota/apis/quota/v1"
 )
 
 func NewResourceQuota(ctx context.Context, context *ControllerContext) (*ConditionalResourceQuotaController, admission.ValidationInterface, error) {
+	f := quota.ListerForResourceFunc(generic.ListerFuncForResourceFunc(context.InformerFactory.ForResource))
 	evaluators := []quota.Evaluator{
 		NewConditionalPodEvaluator(context.InformerFactory),
+		core.NewServiceEvaluator(f),
+		core.NewPersistentVolumeClaimEvaluator(f),
 	}
 	ignoredResources := quotainstall.DefaultIgnoredResources()
 
