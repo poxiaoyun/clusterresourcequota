@@ -125,6 +125,9 @@ func (rq *ClusterResourceQuotaReconciler) syncResourceQuota(ctx context.Context,
 			},
 		}
 		_, err := controllerutil.CreateOrUpdate(ctx, rq.Client, resourceQuota, func() error {
+			resourceQuota.Labels = clusterResourceQuota.Labels
+			resourceQuota.Annotations = clusterResourceQuota.Annotations
+
 			if resourceQuota.Labels == nil {
 				resourceQuota.Labels = map[string]string{}
 			}
