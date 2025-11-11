@@ -18,5 +18,7 @@ func NewClusterResourceQuota(ctx context.Context, mgr manager.Manager) error {
 	mgr.Add(&CacheSyner{Cache: cache, Client: mgr.GetClient(), Interval: 30 * time.Second})
 	webhook := NewResourceQuotaStatusAdmission(cache, mgr.GetClient())
 	mgr.GetWebhookServer().Register("/validate-resourcequota-status", &admission.Webhook{Handler: webhook})
+	webhookRemove := NewResourceQuotaRemoveAdmission(mgr.GetClient())
+	mgr.GetWebhookServer().Register("/validate-resourcequota-remove", &admission.Webhook{Handler: webhookRemove})
 	return nil
 }

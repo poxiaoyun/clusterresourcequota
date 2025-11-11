@@ -99,6 +99,37 @@ webhooks:
       resources:
         - resourcequotas/status
     sideEffects: None
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      {{- if not .Values.admissionWebhooks.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "clusterresourcequota.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /validate-resourcequota-remove
+    failurePolicy: {{ .Values.admissionWebhooks.failurePolicy }}
+    name: validate.resourcequota.remove.xiaoshiai.cn
+    {{- if .Values.admissionWebhooks.namespaceSelector }}
+    namespaceSelector:
+      {{- toYaml .Values.admissionWebhooks.namespaceSelector | nindent 6 }}
+    {{- end }}
+    objectSelector:
+      matchExpressions:
+        - key: clusterresourcequota.xiaoshiai.cn
+          operator: Exists
+    rules:
+    - apiGroups:
+        - "quota.xiaoshiai.cn"
+      apiVersions:
+        - v1
+      operations:
+        - UPDATE
+        - DELETE
+      resources:
+        - resourcequotas
+    sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
