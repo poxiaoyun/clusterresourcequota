@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	authnv1 "k8s.io/api/authentication/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 	quota "k8s.io/apiserver/pkg/quota/v1"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 	quotav1 "xiaoshiai.cn/clusterresourcequota/apis/quota/v1"
@@ -35,12 +37,6 @@ func NewResourceQuotaStatusAdmission(cache *ResourceQuotaCache, client client.Cl
 
 func (c *ResourceQuotaStatusAdmission) Handle(ctx context.Context, req admission.Request) admission.Response {
 	log := logr.FromContextOrDiscard(ctx)
-	// only handle requests from our Resource Quota Admission,
-	// AKA, only handle status update requests from apiserver
-	if !isResourceQuotaAdmissionControllerServiceAccount(&req.UserInfo) {
-		log.V(1).Info("Request is not from Kubernetes Resource Quota Admission; Allowed")
-		return admission.Allowed("Request is not from Kubernetes Resource Quota Admission")
-	}
 	inst := &quotav1.ResourceQuota{}
 	if err := c.Decoder.Decode(req, inst); err != nil {
 		log.Error(err, "Decode request")
@@ -54,30 +50,36 @@ func (c *ResourceQuotaStatusAdmission) Handle(ctx context.Context, req admission
 		log.V(1).Info("Not managed by ClusterResourceQuota; Allowed")
 		return admission.Allowed("Not managed by ClusterResourceQuota")
 	}
-	clusterresourcequota := &quotav1.ClusterResourceQuota{}
-	if err := c.Client.Get(ctx, client.ObjectKey{Name: clusterresourcequotaname}, clusterresourcequota); err != nil {
-		if apierrors.IsNotFound(err) {
-			return admission.Allowed("Not managed by ClusterResourceQuota")
+	backoff := wait.Backoff{
+		Duration: 100 * time.Millisecond,
+		Factor:   2.0,
+		Jitter:   0.1,
+		Steps:    5,
+	}
+	err := retry.RetryOnConflict(backoff, func() error {
+		return c.validate(ctx, inst, clusterresourcequotaname)
+	})
+	if err != nil {
+		log.Error(err, "Validate ResourceQuota status against ClusterResourceQuota")
+		if apierrors.IsForbidden(err) {
+			return admission.Errored(http.StatusForbidden, err)
 		}
 		return admission.Errored(http.StatusInternalServerError, err)
-	}
-	if err := c.validate(ctx, inst, clusterresourcequota); err != nil {
-		log.Error(err, "Validate ResourceQuota status")
-		return admission.Errored(http.StatusForbidden, err)
 	}
 	log.V(2).Info("ResourceQuota status validated")
 	return admission.Allowed("ResourceQuota status validated")
 }
 
-func isResourceQuotaAdmissionControllerServiceAccount(user *authnv1.UserInfo) bool {
-	// Treat nil user same as admission controller SA so that unit tests do not need to
-	// specify admission controller SA.
-	return user == nil || user.Username == "kubernetes-admin" ||
-		slices.Contains(user.Groups, "system:masters")
-}
+func (c *ResourceQuotaStatusAdmission) validate(ctx context.Context, rq *quotav1.ResourceQuota, clusterresourcequotaname string) error {
+	return c.Cache.GetOrCreate(ctx, clusterresourcequotaname).OnLock(ctx, func(cache *ClusterResourceQuotaCache) error {
+		crq := &quotav1.ClusterResourceQuota{}
+		if err := c.Client.Get(ctx, client.ObjectKey{Name: clusterresourcequotaname}, crq); err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil
+			}
+			return err
+		}
 
-func (c *ResourceQuotaStatusAdmission) validate(ctx context.Context, rq *quotav1.ResourceQuota, crq *quotav1.ClusterResourceQuota) error {
-	return c.Cache.GetOrCreate(ctx, crq.Name).OnLock(ctx, func(cache *ClusterResourceQuotaCache) error {
 		oldtotal := corev1.ResourceList{}
 		for _, usage := range cache.Quotas {
 			oldtotal = quota.Add(oldtotal, usage.Used)
@@ -91,11 +93,12 @@ func (c *ResourceQuotaStatusAdmission) validate(ctx context.Context, rq *quotav1
 
 		// add current request and check against clusterresourcequota status hard limit
 		if ok, exceeded := quota.LessThanOrEqual(newtotal, crq.Status.Hard); !ok {
-			return fmt.Errorf("exceeded cluster quota: %s, requested: %s, used: %s, limited: %s",
+			err := fmt.Errorf("exceeded cluster quota: %s, requested: %s, used: %s, limited: %s",
 				crq.Name,
 				prettyPrint(quota.Mask(delta, exceeded)),
 				prettyPrint(quota.Mask(oldtotal, exceeded)),
 				prettyPrint(quota.Mask(crq.Status.Hard, exceeded)))
+			return apierrors.NewForbidden(schema.GroupResource{}, "", err)
 		}
 		// update clusterresourcequota status
 		updateClusterResourceQuotaStatusUsed(crq, rq, newtotal)
