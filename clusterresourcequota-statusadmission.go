@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	authnv1 "k8s.io/api/authentication/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -37,6 +38,9 @@ func NewResourceQuotaStatusAdmission(cache *ResourceQuotaCache, client client.Cl
 
 func (c *ResourceQuotaStatusAdmission) Handle(ctx context.Context, req admission.Request) admission.Response {
 	log := logr.FromContextOrDiscard(ctx)
+
+	isWebhook := !isResourceQuotaAdmissionControllerServiceAccount(&req.UserInfo)
+
 	inst := &quotav1.ResourceQuota{}
 	if err := c.Decoder.Decode(req, inst); err != nil {
 		log.Error(err, "Decode request")
@@ -57,7 +61,7 @@ func (c *ResourceQuotaStatusAdmission) Handle(ctx context.Context, req admission
 		Steps:    5,
 	}
 	err := retry.RetryOnConflict(backoff, func() error {
-		return c.validate(ctx, inst, clusterresourcequotaname)
+		return c.validate(ctx, inst, clusterresourcequotaname, !isWebhook)
 	})
 	if err != nil {
 		log.Error(err, "Validate ResourceQuota status against ClusterResourceQuota")
@@ -70,7 +74,14 @@ func (c *ResourceQuotaStatusAdmission) Handle(ctx context.Context, req admission
 	return admission.Allowed("ResourceQuota status validated")
 }
 
-func (c *ResourceQuotaStatusAdmission) validate(ctx context.Context, rq *quotav1.ResourceQuota, clusterresourcequotaname string) error {
+func isResourceQuotaAdmissionControllerServiceAccount(user *authnv1.UserInfo) bool {
+	// Treat nil user same as admission controller SA so that unit tests do not need to
+	// specify admission controller SA.
+	return user == nil || user.Username == "kubernetes-admin" ||
+		slices.Contains(user.Groups, "system:masters")
+}
+
+func (c *ResourceQuotaStatusAdmission) validate(ctx context.Context, rq *quotav1.ResourceQuota, clusterresourcequotaname string, skipvalidation bool) error {
 	return c.Cache.GetOrCreate(ctx, clusterresourcequotaname).OnLock(ctx, func(cache *ClusterResourceQuotaCache) error {
 		crq := &quotav1.ClusterResourceQuota{}
 		if err := c.Client.Get(ctx, client.ObjectKey{Name: clusterresourcequotaname}, crq); err != nil {
@@ -92,13 +103,15 @@ func (c *ResourceQuotaStatusAdmission) validate(ctx context.Context, rq *quotav1
 		newtotal := quota.Add(oldtotal, delta)
 
 		// add current request and check against clusterresourcequota status hard limit
-		if ok, exceeded := quota.LessThanOrEqual(newtotal, crq.Status.Hard); !ok {
-			err := fmt.Errorf("exceeded cluster quota: %s, requested: %s, used: %s, limited: %s",
-				crq.Name,
-				prettyPrint(quota.Mask(delta, exceeded)),
-				prettyPrint(quota.Mask(oldtotal, exceeded)),
-				prettyPrint(quota.Mask(crq.Status.Hard, exceeded)))
-			return apierrors.NewForbidden(schema.GroupResource{}, "", err)
+		if !skipvalidation {
+			if ok, exceeded := quota.LessThanOrEqual(newtotal, crq.Status.Hard); !ok {
+				err := fmt.Errorf("exceeded cluster quota: %s, requested: %s, used: %s, limited: %s",
+					crq.Name,
+					prettyPrint(quota.Mask(delta, exceeded)),
+					prettyPrint(quota.Mask(oldtotal, exceeded)),
+					prettyPrint(quota.Mask(crq.Status.Hard, exceeded)))
+				return apierrors.NewForbidden(schema.GroupResource{}, "", err)
+			}
 		}
 		// update clusterresourcequota status
 		updateClusterResourceQuotaStatusUsed(crq, rq, newtotal)

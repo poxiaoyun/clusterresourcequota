@@ -11,6 +11,7 @@ import (
 	quota "k8s.io/apiserver/pkg/quota/v1"
 	"k8s.io/apiserver/pkg/quota/v1/generic"
 	"k8s.io/client-go/informers"
+	listercorev1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/kubernetes/pkg/quota/v1/evaluator/core"
 	"k8s.io/utils/clock"
 )
@@ -29,12 +30,14 @@ func NewConditionalPodEvaluator(informers informers.SharedInformerFactory) quota
 	return &ConditionalPodEvaluator{
 		Evaluator:           core.NewPodEvaluator(listerFuncForResource, clock.RealClock{}),
 		listFuncByNamespace: generic.ListResourceUsingListerFunc(listerFuncForResource, corev1.SchemeGroupVersion.WithResource("pods")),
+		nodesLister:         informers.Core().V1().Nodes().Lister(),
 	}
 }
 
 type ConditionalPodEvaluator struct {
 	Evaluator           quota.Evaluator
 	listFuncByNamespace generic.ListFuncByNamespace
+	nodesLister         listercorev1.NodeLister
 }
 
 // Constraints implements v1.Evaluator.
@@ -48,8 +51,8 @@ func (c *ConditionalPodEvaluator) GroupResource() schema.GroupResource {
 }
 
 // Handles implements v1.Evaluator.
-func (c *ConditionalPodEvaluator) Handles(operation admission.Attributes) bool {
-	return c.Evaluator.Handles(operation)
+func (c *ConditionalPodEvaluator) Handles(a admission.Attributes) bool {
+	return c.Evaluator.Handles(a)
 }
 
 // MatchingResources implements v1.Evaluator.
@@ -124,7 +127,8 @@ func ConditionalPodMatchesScopeFunc(selector corev1.ScopedResourceSelectorRequir
 }
 
 func PodNodeSelectorMatch(pod *corev1.Pod, selector corev1.ScopedResourceSelectorRequirement) (bool, error) {
-	podNodeSelector := pod.Spec.NodeSelector
+	nodeSelector := pod.Spec.NodeSelector
+
 	switch selector.Operator {
 	case corev1.ScopeSelectorOpIn:
 		for _, value := range selector.Values {
@@ -132,7 +136,7 @@ func PodNodeSelectorMatch(pod *corev1.Pod, selector corev1.ScopedResourceSelecto
 			if err != nil {
 				return false, err
 			}
-			if selector.Matches(labels.Set(podNodeSelector)) {
+			if selector.Matches(labels.Set(nodeSelector)) {
 				return true, nil
 			}
 		}
@@ -143,15 +147,15 @@ func PodNodeSelectorMatch(pod *corev1.Pod, selector corev1.ScopedResourceSelecto
 			if err != nil {
 				return false, err
 			}
-			if selector.Matches(labels.Set(podNodeSelector)) {
+			if selector.Matches(labels.Set(nodeSelector)) {
 				return false, nil
 			}
 		}
 		return true, nil
 	case corev1.ScopeSelectorOpExists:
-		return len(podNodeSelector) != 0, nil
+		return len(nodeSelector) != 0, nil
 	case corev1.ScopeSelectorOpDoesNotExist:
-		return len(podNodeSelector) == 0, nil
+		return len(nodeSelector) == 0, nil
 	default:
 		return false, fmt.Errorf("unsupported operator %v for NodeSelector scope", selector.Operator)
 	}

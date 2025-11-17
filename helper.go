@@ -5,9 +5,10 @@ import (
 	"errors"
 	"net/http"
 
-	v1 "k8s.io/api/admission/v1"
+	admissionv1 "k8s.io/api/admission/v1"
 	authenticationv1 "k8s.io/api/authentication/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	apiserveradmission "k8s.io/apiserver/pkg/admission"
@@ -55,7 +56,7 @@ func (v ValidationInterfaceAdaptor) Handle(ctx context.Context, req admission.Re
 			return admission.Errored(http.StatusBadRequest, err)
 		}
 		return admission.Response{
-			AdmissionResponse: v1.AdmissionResponse{
+			AdmissionResponse: admissionv1.AdmissionResponse{
 				Allowed: false,
 				Result:  ptr.To(statusErr.Status()),
 			},
@@ -79,16 +80,36 @@ func (v ValidationInterfaceAdaptor) decodeObject(_ context.Context, req admissio
 		current = empty
 	}
 	if req.OldObject.Raw != nil {
-		old, err := v.Schema.New(gvk)
+		empty, err := v.Schema.New(gvk)
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		if err := dec.DecodeRaw(req.OldObject, old); err != nil {
+		if err := dec.DecodeRaw(req.OldObject, empty); err != nil {
 			return nil, nil, nil, err
 		}
+		old = empty
 	}
 	if req.Options.Raw != nil {
-		// TODO: decode to the options
+		switch req.Operation {
+		case admissionv1.Create:
+			create := &metav1.CreateOptions{}
+			if err := dec.DecodeRaw(req.Options, create); err != nil {
+				return nil, nil, nil, err
+			}
+			options = create
+		case admissionv1.Update:
+			update := &metav1.UpdateOptions{}
+			if err := dec.DecodeRaw(req.Options, update); err != nil {
+				return nil, nil, nil, err
+			}
+			options = update
+		case admissionv1.Delete:
+			delete := &metav1.DeleteOptions{}
+			if err := dec.DecodeRaw(req.Options, delete); err != nil {
+				return nil, nil, nil, err
+			}
+			options = delete
+		}
 	}
 	return current, old, options, nil
 }
