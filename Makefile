@@ -42,6 +42,11 @@ define build-binary
 	GOOS=${1} GOARCH=$(2) CGO_ENABLED=0 go build -gcflags=all="-N -l" -ldflags="${LDFLAGS}" -o ${BIN_DIR}/${1}-${2} ./cmd/...
 endef
 
+generate-install:
+	@echo "Generating install manifests..."
+	helm template clusterresourcequota deploy/clusterresourcequota --version=${VERSION} --namespace clusterresourcequota > deploy/install.yaml
+
+
 build: build-binary
 
 .PHONY: build-binary

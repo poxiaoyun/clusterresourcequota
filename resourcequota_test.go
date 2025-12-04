@@ -56,7 +56,7 @@ func TestAdmitLimitedResourceWithQuota(t *testing.T) {
 
 	context := NewFakeControllerContext(ctx, []runtime.Object{}, []runtime.Object{resourceQuota})
 
-	controller, admissionHandler, err := clusterresourcequota.NewResourceQuota(ctx, context)
+	controller, admissionHandler, err := clusterresourcequota.NewResourceQuota(ctx, context, nil)
 	if err != nil {
 		t.Errorf("Error occurred while creating admission plugin: %v", err)
 	}

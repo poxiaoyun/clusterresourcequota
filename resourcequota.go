@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/admission/plugin/resourcequota"
+	resourcequotaapi "k8s.io/apiserver/pkg/admission/plugin/resourcequota/apis/resourcequota"
 	quota "k8s.io/apiserver/pkg/quota/v1"
 	"k8s.io/apiserver/pkg/quota/v1/generic"
 	"k8s.io/client-go/discovery"
@@ -23,7 +24,7 @@ import (
 	thisquotav1 "xiaoshiai.cn/clusterresourcequota/apis/quota/v1"
 )
 
-func NewResourceQuota(ctx context.Context, context *ControllerContext) (*ConditionalResourceQuotaController, admission.ValidationInterface, error) {
+func NewResourceQuota(ctx context.Context, context *ControllerContext, rqConfig *resourcequotaapi.Configuration) (*ConditionalResourceQuotaController, admission.ValidationInterface, error) {
 	f := quota.ListerForResourceFunc(generic.ListerFuncForResourceFunc(context.InformerFactory.ForResource))
 	evaluators := []quota.Evaluator{
 		NewConditionalPodEvaluator(context.InformerFactory),
@@ -47,7 +48,7 @@ func NewResourceQuota(ctx context.Context, context *ControllerContext) (*Conditi
 
 	config := generic.NewConfiguration(evaluators, ignoredResources)
 
-	admission, err := NewResourceQuotaAdmission(ctx, hijackClientSet, hijackInformers, config)
+	admission, err := NewResourceQuotaAdmission(ctx, hijackClientSet, hijackInformers, config, rqConfig)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -62,8 +63,8 @@ func NewResourceQuota(ctx context.Context, context *ControllerContext) (*Conditi
 	return quotacontroller, admission, nil
 }
 
-func NewResourceQuotaAdmission(ctx context.Context, clientset kubernetes.Interface, informers informers.SharedInformerFactory, c quota.Configuration) (*resourcequota.QuotaAdmission, error) {
-	quotaAdmission, err := resourcequota.NewResourceQuota(nil, 5)
+func NewResourceQuotaAdmission(ctx context.Context, clientset kubernetes.Interface, informers informers.SharedInformerFactory, c quota.Configuration, rqConfig *resourcequotaapi.Configuration) (*resourcequota.QuotaAdmission, error) {
+	quotaAdmission, err := resourcequota.NewResourceQuota(rqConfig, 5)
 	if err != nil {
 		return nil, err
 	}

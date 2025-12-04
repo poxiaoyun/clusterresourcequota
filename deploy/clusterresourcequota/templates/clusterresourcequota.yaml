@@ -211,8 +211,6 @@ spec:
       targetPort: https
       {{- if and (or (eq .Values.clusterresourcequota.service.type "NodePort") (eq .Values.clusterresourcequota.service.type "LoadBalancer")) (not (empty .Values.clusterresourcequota.service.nodePorts.https)) }}
       nodePort: {{ .Values.clusterresourcequota.service.nodePorts.https }}
-      {{- else if eq .Values.clusterresourcequota.service.type "ClusterIP" }}
-      nodePort: null
       {{- end }}
     {{- if .Values.clusterresourcequota.metrics.enabled }}
     - name: metrics
@@ -220,8 +218,6 @@ spec:
       targetPort: metrics
       {{- if and (or (eq .Values.clusterresourcequota.service.type "NodePort") (eq .Values.clusterresourcequota.service.type "LoadBalancer")) (not (empty .Values.clusterresourcequota.service.nodePorts.metrics)) }}
       nodePort: {{ .Values.clusterresourcequota.service.nodePorts.metrics }}
-      {{- else if eq .Values.clusterresourcequota.service.type "ClusterIP" }}
-      nodePort: null
       {{- end }}
     {{- end }}
     {{- if .Values.clusterresourcequota.service.extraPorts }}

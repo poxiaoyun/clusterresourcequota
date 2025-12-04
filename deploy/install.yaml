@@ -1,0 +1,302 @@
+---
+# Source: clusterresourcequota/templates/rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: clusterresourcequota
+  namespace: "clusterresourcequota"
+  labels:
+    app.kubernetes.io/name: clusterresourcequota
+    helm.sh/chart: clusterresourcequota-0.0.0
+    app.kubernetes.io/instance: clusterresourcequota
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "0.0.0"
+    app.kubernetes.io/component: controller
+---
+# Source: clusterresourcequota/templates/webhook.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: clusterresourcequota
+  labels:
+    app.kubernetes.io/name: clusterresourcequota
+    helm.sh/chart: clusterresourcequota-0.0.0
+    app.kubernetes.io/instance: clusterresourcequota
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "0.0.0"
+    app.kubernetes.io/component: clusterresourcequota
+type: kubernetes.io/tls
+data:
+  tls.crt: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURvVENDQW9tZ0F3SUJBZ0lRQ1ZJMmh2ekJ5YXFvOTBrQ1phNXBMVEFOQmdrcWhraUc5dzBCQVFzRkFEQWkKTVNBd0hnWURWUVFERXhkamJIVnpkR1Z5Y21WemIzVnlZMlZ4ZFc5MFlTMWpZVEFlRncweU5URXlNRFF3T1RVegpNVGxhRncwek5URXlNREl3T1RVek1UbGFNQjh4SFRBYkJnTlZCQU1URkdOc2RYTjBaWEp5WlhOdmRYSmpaWEYxCmIzUmhNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQTZxREZKaUNISFpNSmZLdUsKdlRlNTliM01IdlRJS3BxRVFLYnFvVFdacmFMeWpCVnJLQ0R6aW1zVkQ4T3lEeXk0WGVCcGlSbkpoK3Q0Z0lUOAprQnRLMG1yc2c4YVB0dzhwNEhiVkxuZGNFME9EVGF5ZVJ3STFsZ2JIQzRKS1ljOE9KUXUvWEliYkxheUZvVHdlCjY2Yk1HeTRjUjdTNVpwNnFNYXloVFl2b3ZXU25vK20zMGxQdG13WTlXc2t5VnJvcDVDUTlEUGVqbGxQUWt2NnoKTUlrOEFSOWFPWTNXdnhpYmd2cXlITTlOaFFsU2xRalJCNk5DOTUyRk9aSFFBMWNHcjBWcmU1OWYzZ1duaGFIRQpBV1VRcFJCeUtjTkh2bGprWldEaUlyZkZiUTZpL1crdEZheklqaDB6MkljWkdXL09ZcHc0M3NjdHc4cXdIM2VKCk1ZaEJhd0lEQVFBQm80SFZNSUhTTUE0R0ExVWREd0VCL3dRRUF3SUZvREFkQmdOVkhTVUVGakFVQmdnckJnRUYKQlFjREFRWUlLd1lCQlFVSEF3SXdEQVlEVlIwVEFRSC9CQUl3QURBZkJnTlZIU01FR0RBV2dCVFRyLzg2b0dheQpPZjdJK3l5QnA4VHlZSlRqa3pCeUJnTlZIUkVFYXpCcGdpMWpiSFZ6ZEdWeWNtVnpiM1Z5WTJWeGRXOTBZUzVqCmJIVnpkR1Z5Y21WemIzVnlZMlZ4ZFc5MFlTNXpkbU9DT0dOc2RYTjBaWEp5WlhOdmRYSmpaWEYxYjNSaExtTnMKZFhOMFpYSnlaWE52ZFhKalpYRjFiM1JoTG5OMll5NGxJWE1vUEc1cGJENHBNQTBHQ1NxR1NJYjNEUUVCQ3dVQQpBNElCQVFCa1FaSDhtMURQaUc5M3p0aVRyd3pIcFhSVFRtUTlYcmtseU90OE1zMXNBMjBpeHZzVnNFamkxT3NRCjdWNXlhZ1I5MXJFMnB0QXhTL3VHcVN0eTV4enhJU0JzMVRVVWh4dmRNSGlkVWNsZ0hPOG11WGhKZVgya2NycDcKbG5Eam03ZDdheTg1Qjh0S2dJQmpGbTBZM013QTQ2L3FzRDN2ZzdvclB3ZTlvdlFuTTRDU0ZUbjQzNDdEeEdKcApocGpOc3pNd1VlOVN0QlpjZHJ4V2VYOFgxZXI3bzJ2S01GVlRMMGxCaDBlT1FxUElLSTNJM3BoRy9NNXlJTFk2CjltWmhFT1IzeFBsbThvWTNoQkovTFZqZVRTcXY2QUU0c2lOT3RPc3VCNUZmUlVucnFGUVpwc0FBd2dkV2laT1MKOUY0OEpJMEVQeFYzWWhZU2dEem5nN0VGKzhjQgotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
+  tls.key: "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBNnFERkppQ0hIWk1KZkt1S3ZUZTU5YjNNSHZUSUtwcUVRS2Jxb1RXWnJhTHlqQlZyCktDRHppbXNWRDhPeUR5eTRYZUJwaVJuSmgrdDRnSVQ4a0J0SzBtcnNnOGFQdHc4cDRIYlZMbmRjRTBPRFRheWUKUndJMWxnYkhDNEpLWWM4T0pRdS9YSWJiTGF5Rm9Ud2U2NmJNR3k0Y1I3UzVacDZxTWF5aFRZdm92V1NubyttMwowbFB0bXdZOVdza3lWcm9wNUNROURQZWpsbFBRa3Y2ek1JazhBUjlhT1kzV3Z4aWJndnF5SE05TmhRbFNsUWpSCkI2TkM5NTJGT1pIUUExY0dyMFZyZTU5ZjNnV25oYUhFQVdVUXBSQnlLY05Idmxqa1pXRGlJcmZGYlE2aS9XK3QKRmF6SWpoMHoySWNaR1cvT1lwdzQzc2N0dzhxd0gzZUpNWWhCYXdJREFRQUJBb0lCQUF3Y1gxWWYrMTdMUTY2WgpPNFh0SzBsTzBqWDQyWitGV1VxWVhiMFRnMkFON0tva0dEaTZqQWVsamx2c0h6UDBVWHliQkZJM2hWKzIzUUg1ClJnRE82b0QyVkVpd1c2TzRnZElISUVBNm1LM3Y0QVpjTmlhaEs3dENQMHo0blRhZVFFaCtQNUx3UW1rQm9qdUMKaGNWbWdkdVhUamk1K3p0R1RscFdZdjhaNG9UQUQ0VVYvTkZNS3VCRko5bGpwUUt1WUJ3UmtBN1ZnVS9WdUtENQozRWJaVlJ0eXBEY1M3dy92KzJWOTBUbmIzVUNuSnpnU3dwQkFUOWNBMEVNNHFqWlg5RTYrdnJLWTBYVG1tUjlCClo2dFNFQVE0WitGaEpzZklWY01FOE83L011bEFiMXlTemlnWlp2VHVUMDZNSWcreXpxNmxSc3pqanRjOGxHQ2MKaGkzbDF5RUNnWUVBOTRaU2dNckdqMjB6UjBrRmUyWVBVdzdVZXhxRk5GQVRRdHovaFo3b2FnTXcvWm05N012WQpITTdZSlNnZWVBT3JxcGN3V0YyaGVvWG1JV0dvT2dxdmVuMGRLaG9xQ1hndDAxSmY2NzMvdy9uZllGK2pONEQ3CkVvYnU1a2RPd2lwdURlWVBoRlRSVE5wUUQ3dTlNbS9YcTdlaG9kT0ROY3hneHFPSm0wNzlnY3NDZ1lFQThxbG0KNC9EUUNjRVpwWGlJaEtkaU1YanNUenJRWE85ZmxXUEdnS3V6K0R6V1NOR1NFM3NnRGhZN3BXTEs5WWNXSnVJcApqRTBjZWlpV3hCMFBqaG12NlRtSUhjTUVNbytwbzdQdUVIWUVwZWhMSWQvWGh6N2IwVHlZcUczQ0NrYlRpcTlvCnV5VENFN1hzNGNGV3FjUzc4SFhWQWgwQ2VveDJ5eWxNWnM4Tnl1RUNnWUVBMFYvaHNlZlVoY1lOTmlOaWE3c3QKQTBqc0d5V1h2MlJzcG9aaDdoazQ1MVBEd1FDblV3SXEwRk4zS2hjQmp1c3I3cVRzMUJKL1lUQ2FOV3B4N29iVApZSDBzaWt5UGVtc1orRU1adUVPRGNiYVBhT245R2hvVVJ0dTBnVDJZTlUzR3dpTDB4UzhwekNSdXpLQTFyZEJGClVvK0dQV2k0K0d6ay82R2Q2SzJzYW5rQ2dZQmkvNHVUZU41VzdHbTdJVWFJNEFUbWJBLzBidWtzMFJlc3ljemwKRjZmUG9YcEdzUUVvWTNYN2FVU2lQNERQMUhITUlUNlVGNjJEaE9XbFVyblMzbFh2RDJLaHlici9xYTZxczdCdgpGTWJtckxOaU9ZRWpreGg0NzREVVRocjR1Rlo3WVA2WVF2SE91c3pPZVdNUzFjbGEyNmV3T2dlVjJaSnBaZ3JlCmNxQ000UUtCZ0dXVG12NDRKYjBycTBXK1R5V0lVZUdmTlIvc29lMjRDN1pJNjBISzFqb0hQTUN0KzFYN0dEcmEKUzdickNnSmNSN0tDMEVNTkF1VldLQ0tIcXREVzloWVJtcFJETVNEUnQ0ek01d0pjeWgya2ZNOGpuT2d1Zzk4dQprZ2F2bi9WeVRBMmJVR25MeUsyV1NJbGc2Q3J2UVpaR0FWWkwzYkZqb2lreDRFOUNMQlNuCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg=="
+  ca.crt: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURMekNDQWhlZ0F3SUJBZ0lRVzFSYm5MQnFORmdQa292ZDkvUjhTekFOQmdrcWhraUc5dzBCQVFzRkFEQWkKTVNBd0hnWURWUVFERXhkamJIVnpkR1Z5Y21WemIzVnlZMlZ4ZFc5MFlTMWpZVEFlRncweU5URXlNRFF3T1RVegpNVGxhRncwek5URXlNREl3T1RVek1UbGFNQ0l4SURBZUJnTlZCQU1URjJOc2RYTjBaWEp5WlhOdmRYSmpaWEYxCmIzUmhMV05oTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF1bDdqVk50cXZEazAKUEt1ZXpkOWIxVGNONy8vQ0NDbDZ3ZXE4WllLRkxld1RhSmx5ZjlieG14UTlUUjVyZy9VM0pmYlgwemNVM3ViZAozMFE2T0FZd0Z2bDNaN0JMTUF3cGFyaW0wb3lwMG43cEtNRHFleXZhRnNwcTFTbXE3VGtvYkxQU2l3eE1zVW5KCnloK2pPOVVyRE5PVEVYTXI5cjUvQXc0c0dGQ1RCMVZ5ZzNZdmNoVkVMWWVESzJNcGxuUWdmbzdjeWlBQ0hFSVQKNkoxTHJMV2hLRTgzbDZOTTljc3JMY0lzenVYdXZMTys3VVNvZlZsc2N6ODh4eTVjNzV3TG1Eb3hjRlNpZnJlVQo3ZEdiNmRHV3V6L1dacGxCSTl1NVY1V3pwQkxObThHRXFFbUJKcXpCRFhFbkRJMExYbEJxSUtIOFFpZUx4MExYCnU2QUF5cmhITXdJREFRQUJvMkV3WHpBT0JnTlZIUThCQWY4RUJBTUNBcVF3SFFZRFZSMGxCQll3RkFZSUt3WUIKQlFVSEF3RUdDQ3NHQVFVRkJ3TUNNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGTk92L3pxZwpackk1L3NqN0xJR254UEpnbE9PVE1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQStubGtjd2lDUjRHVzd5eWtsCnMzZk5RY0M2bi9SOERpUTJkZXplNXRtaTdselBKbnYzSHFDL1NpNmNWM2kyc1Yyd3RPVURJV3Y5L1BIc3E3Wi8KMkZaODEyd3Z2R3dsY1kxYk8zTkJZZlJSTHhjQjljK3NtUlJGNDRCZ3dnSHVvaUtsbWFZVWVKL0QvaTBQZS9HZgpJYlJ0UTlIRTkxdDMySE1hTU9YKzR2c3lsbWJMQ0grcVlFSEg3SmdIVFc1azlhL0RDNHRrNXlXU2doWDBPYVFjCmw5ZitCU0JaUnR3dG92SW9WcnQ0L05WVEhyZmladzNZQkhQcUZodUd2dllja2R4U244NnhCZitlYjQ0Y2RqTWEKUTArWk5DQzU2VFFUOVkvcGNVaTFtVXNYSTJBbVZlT294aTZ5NWdQSFpZOUdoUUNhSVhvbjJaZ0NyM0dXazhXdgpaV0J5Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+---
+# Source: clusterresourcequota/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterresourcequota
+  labels:
+    app.kubernetes.io/name: clusterresourcequota
+    helm.sh/chart: clusterresourcequota-0.0.0
+    app.kubernetes.io/instance: clusterresourcequota
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "0.0.0"
+    app.kubernetes.io/component: clusterresourcequota
+rules:
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - "*"
+---
+# Source: clusterresourcequota/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: clusterresourcequota
+  labels:
+    app.kubernetes.io/name: clusterresourcequota
+    helm.sh/chart: clusterresourcequota-0.0.0
+    app.kubernetes.io/instance: clusterresourcequota
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "0.0.0"
+    app.kubernetes.io/component: clusterresourcequota
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: clusterresourcequota
+subjects:
+  - kind: ServiceAccount
+    name: clusterresourcequota
+    namespace: clusterresourcequota
+---
+# Source: clusterresourcequota/templates/clusterresourcequota.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: clusterresourcequota
+  namespace: "clusterresourcequota"
+  labels:
+    app.kubernetes.io/instance: clusterresourcequota
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: clusterresourcequota
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: clusterresourcequota-0.0.0
+    app.kubernetes.io/component: clusterresourcequota
+spec:
+  type: ClusterIP
+  ports:
+    - name: https
+      port: 443
+      targetPort: https
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+  selector:
+    app.kubernetes.io/instance: clusterresourcequota
+    app.kubernetes.io/name: clusterresourcequota
+    app.kubernetes.io/component: clusterresourcequota
+---
+# Source: clusterresourcequota/templates/clusterresourcequota.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clusterresourcequota
+  namespace: "clusterresourcequota"
+  labels:
+    app.kubernetes.io/instance: clusterresourcequota
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: clusterresourcequota
+    app.kubernetes.io/version: 0.0.0
+    helm.sh/chart: clusterresourcequota-0.0.0
+    app.kubernetes.io/component: clusterresourcequota
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: clusterresourcequota
+      app.kubernetes.io/name: clusterresourcequota
+      app.kubernetes.io/component: clusterresourcequota
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: clusterresourcequota
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: clusterresourcequota
+        app.kubernetes.io/version: 0.0.0
+        helm.sh/chart: clusterresourcequota-0.0.0
+        app.kubernetes.io/component: clusterresourcequota
+    spec:
+      serviceAccountName: clusterresourcequota
+      affinity:
+        podAffinity:
+
+        podAntiAffinity:
+
+        nodeAffinity:
+
+      hostNetwork: false
+      initContainers:
+      containers:
+        - name: clusterresourcequota
+          image: registry.cn-hangzhou.aliyuncs.com/xiaoshiai/clusterresourcequota:latest
+          imagePullPolicy:
+          command:
+            - clusterresourcequota
+            - --v=1
+            - --probe-enabled
+            - --webhook-enabled
+            - --webhook-certdir=/certs
+            - --webhook-addr=:8443
+            - --metrics-enabled
+            - --metrics-addr=:9090
+          env:
+          envFrom:
+          resources:
+            limits: {}
+            requests: {}
+          ports:
+            - name: https
+              containerPort: 8443
+            - name: probe
+              containerPort: 8080
+            - name: metrics
+              containerPort: 9090
+          livenessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 60
+            httpGet:
+              path: /healthz
+              port: probe
+          readinessProbe:
+            failureThreshold: 5
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            httpGet:
+              path: /healthz
+              port: probe
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+      volumes:
+        - name: certs
+          secret:
+            secretName: clusterresourcequota
+---
+# Source: clusterresourcequota/templates/webhook.yaml
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: clusterresourcequota
+  labels:
+    app.kubernetes.io/name: clusterresourcequota
+    helm.sh/chart: clusterresourcequota-0.0.0
+    app.kubernetes.io/instance: clusterresourcequota
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "0.0.0"
+    app.kubernetes.io/component: clusterresourcequota
+  annotations:
+---
+# Source: clusterresourcequota/templates/webhook.yaml
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: clusterresourcequota
+  labels:
+    app.kubernetes.io/name: clusterresourcequota
+    helm.sh/chart: clusterresourcequota-0.0.0
+    app.kubernetes.io/instance: clusterresourcequota
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "0.0.0"
+    app.kubernetes.io/component: clusterresourcequota
+  annotations:
+webhooks:
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      caBundle: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURMekNDQWhlZ0F3SUJBZ0lRVzFSYm5MQnFORmdQa292ZDkvUjhTekFOQmdrcWhraUc5dzBCQVFzRkFEQWkKTVNBd0hnWURWUVFERXhkamJIVnpkR1Z5Y21WemIzVnlZMlZ4ZFc5MFlTMWpZVEFlRncweU5URXlNRFF3T1RVegpNVGxhRncwek5URXlNREl3T1RVek1UbGFNQ0l4SURBZUJnTlZCQU1URjJOc2RYTjBaWEp5WlhOdmRYSmpaWEYxCmIzUmhMV05oTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF1bDdqVk50cXZEazAKUEt1ZXpkOWIxVGNONy8vQ0NDbDZ3ZXE4WllLRkxld1RhSmx5ZjlieG14UTlUUjVyZy9VM0pmYlgwemNVM3ViZAozMFE2T0FZd0Z2bDNaN0JMTUF3cGFyaW0wb3lwMG43cEtNRHFleXZhRnNwcTFTbXE3VGtvYkxQU2l3eE1zVW5KCnloK2pPOVVyRE5PVEVYTXI5cjUvQXc0c0dGQ1RCMVZ5ZzNZdmNoVkVMWWVESzJNcGxuUWdmbzdjeWlBQ0hFSVQKNkoxTHJMV2hLRTgzbDZOTTljc3JMY0lzenVYdXZMTys3VVNvZlZsc2N6ODh4eTVjNzV3TG1Eb3hjRlNpZnJlVQo3ZEdiNmRHV3V6L1dacGxCSTl1NVY1V3pwQkxObThHRXFFbUJKcXpCRFhFbkRJMExYbEJxSUtIOFFpZUx4MExYCnU2QUF5cmhITXdJREFRQUJvMkV3WHpBT0JnTlZIUThCQWY4RUJBTUNBcVF3SFFZRFZSMGxCQll3RkFZSUt3WUIKQlFVSEF3RUdDQ3NHQVFVRkJ3TUNNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGTk92L3pxZwpackk1L3NqN0xJR254UEpnbE9PVE1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQStubGtjd2lDUjRHVzd5eWtsCnMzZk5RY0M2bi9SOERpUTJkZXplNXRtaTdselBKbnYzSHFDL1NpNmNWM2kyc1Yyd3RPVURJV3Y5L1BIc3E3Wi8KMkZaODEyd3Z2R3dsY1kxYk8zTkJZZlJSTHhjQjljK3NtUlJGNDRCZ3dnSHVvaUtsbWFZVWVKL0QvaTBQZS9HZgpJYlJ0UTlIRTkxdDMySE1hTU9YKzR2c3lsbWJMQ0grcVlFSEg3SmdIVFc1azlhL0RDNHRrNXlXU2doWDBPYVFjCmw5ZitCU0JaUnR3dG92SW9WcnQ0L05WVEhyZmladzNZQkhQcUZodUd2dllja2R4U244NnhCZitlYjQ0Y2RqTWEKUTArWk5DQzU2VFFUOVkvcGNVaTFtVXNYSTJBbVZlT294aTZ5NWdQSFpZOUdoUUNhSVhvbjJaZ0NyM0dXazhXdgpaV0J5Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+      service:
+        name: clusterresourcequota
+        namespace: "clusterresourcequota"
+        path: /validate
+    failurePolicy: Fail
+    name: validate.resourcequota.xiaoshiai.cn
+    namespaceSelector:
+      matchExpressions:
+        - key: app.xiaoshiai.cn/tenant
+          operator: Exists
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+          - persistentvolumeclaims
+          - services
+    sideEffects: None
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      caBundle: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURMekNDQWhlZ0F3SUJBZ0lRVzFSYm5MQnFORmdQa292ZDkvUjhTekFOQmdrcWhraUc5dzBCQVFzRkFEQWkKTVNBd0hnWURWUVFERXhkamJIVnpkR1Z5Y21WemIzVnlZMlZ4ZFc5MFlTMWpZVEFlRncweU5URXlNRFF3T1RVegpNVGxhRncwek5URXlNREl3T1RVek1UbGFNQ0l4SURBZUJnTlZCQU1URjJOc2RYTjBaWEp5WlhOdmRYSmpaWEYxCmIzUmhMV05oTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF1bDdqVk50cXZEazAKUEt1ZXpkOWIxVGNONy8vQ0NDbDZ3ZXE4WllLRkxld1RhSmx5ZjlieG14UTlUUjVyZy9VM0pmYlgwemNVM3ViZAozMFE2T0FZd0Z2bDNaN0JMTUF3cGFyaW0wb3lwMG43cEtNRHFleXZhRnNwcTFTbXE3VGtvYkxQU2l3eE1zVW5KCnloK2pPOVVyRE5PVEVYTXI5cjUvQXc0c0dGQ1RCMVZ5ZzNZdmNoVkVMWWVESzJNcGxuUWdmbzdjeWlBQ0hFSVQKNkoxTHJMV2hLRTgzbDZOTTljc3JMY0lzenVYdXZMTys3VVNvZlZsc2N6ODh4eTVjNzV3TG1Eb3hjRlNpZnJlVQo3ZEdiNmRHV3V6L1dacGxCSTl1NVY1V3pwQkxObThHRXFFbUJKcXpCRFhFbkRJMExYbEJxSUtIOFFpZUx4MExYCnU2QUF5cmhITXdJREFRQUJvMkV3WHpBT0JnTlZIUThCQWY4RUJBTUNBcVF3SFFZRFZSMGxCQll3RkFZSUt3WUIKQlFVSEF3RUdDQ3NHQVFVRkJ3TUNNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGTk92L3pxZwpackk1L3NqN0xJR254UEpnbE9PVE1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQStubGtjd2lDUjRHVzd5eWtsCnMzZk5RY0M2bi9SOERpUTJkZXplNXRtaTdselBKbnYzSHFDL1NpNmNWM2kyc1Yyd3RPVURJV3Y5L1BIc3E3Wi8KMkZaODEyd3Z2R3dsY1kxYk8zTkJZZlJSTHhjQjljK3NtUlJGNDRCZ3dnSHVvaUtsbWFZVWVKL0QvaTBQZS9HZgpJYlJ0UTlIRTkxdDMySE1hTU9YKzR2c3lsbWJMQ0grcVlFSEg3SmdIVFc1azlhL0RDNHRrNXlXU2doWDBPYVFjCmw5ZitCU0JaUnR3dG92SW9WcnQ0L05WVEhyZmladzNZQkhQcUZodUd2dllja2R4U244NnhCZitlYjQ0Y2RqTWEKUTArWk5DQzU2VFFUOVkvcGNVaTFtVXNYSTJBbVZlT294aTZ5NWdQSFpZOUdoUUNhSVhvbjJaZ0NyM0dXazhXdgpaV0J5Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+      service:
+        name: clusterresourcequota
+        namespace: "clusterresourcequota"
+        path: /validate-resourcequota-status
+    failurePolicy: Fail
+    name: validate.clusterresourcequota.xiaoshiai.cn
+    namespaceSelector:
+      matchExpressions:
+        - key: app.xiaoshiai.cn/tenant
+          operator: Exists
+    objectSelector:
+      matchExpressions:
+        - key: clusterresourcequota.xiaoshiai.cn
+          operator: Exists
+    rules:
+      - apiGroups:
+          - "quota.xiaoshiai.cn"
+        apiVersions:
+          - v1
+        operations:
+          - UPDATE
+        resources:
+          - resourcequotas/status
+    sideEffects: None
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      caBundle: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURMekNDQWhlZ0F3SUJBZ0lRVzFSYm5MQnFORmdQa292ZDkvUjhTekFOQmdrcWhraUc5dzBCQVFzRkFEQWkKTVNBd0hnWURWUVFERXhkamJIVnpkR1Z5Y21WemIzVnlZMlZ4ZFc5MFlTMWpZVEFlRncweU5URXlNRFF3T1RVegpNVGxhRncwek5URXlNREl3T1RVek1UbGFNQ0l4SURBZUJnTlZCQU1URjJOc2RYTjBaWEp5WlhOdmRYSmpaWEYxCmIzUmhMV05oTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF1bDdqVk50cXZEazAKUEt1ZXpkOWIxVGNONy8vQ0NDbDZ3ZXE4WllLRkxld1RhSmx5ZjlieG14UTlUUjVyZy9VM0pmYlgwemNVM3ViZAozMFE2T0FZd0Z2bDNaN0JMTUF3cGFyaW0wb3lwMG43cEtNRHFleXZhRnNwcTFTbXE3VGtvYkxQU2l3eE1zVW5KCnloK2pPOVVyRE5PVEVYTXI5cjUvQXc0c0dGQ1RCMVZ5ZzNZdmNoVkVMWWVESzJNcGxuUWdmbzdjeWlBQ0hFSVQKNkoxTHJMV2hLRTgzbDZOTTljc3JMY0lzenVYdXZMTys3VVNvZlZsc2N6ODh4eTVjNzV3TG1Eb3hjRlNpZnJlVQo3ZEdiNmRHV3V6L1dacGxCSTl1NVY1V3pwQkxObThHRXFFbUJKcXpCRFhFbkRJMExYbEJxSUtIOFFpZUx4MExYCnU2QUF5cmhITXdJREFRQUJvMkV3WHpBT0JnTlZIUThCQWY4RUJBTUNBcVF3SFFZRFZSMGxCQll3RkFZSUt3WUIKQlFVSEF3RUdDQ3NHQVFVRkJ3TUNNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGTk92L3pxZwpackk1L3NqN0xJR254UEpnbE9PVE1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQStubGtjd2lDUjRHVzd5eWtsCnMzZk5RY0M2bi9SOERpUTJkZXplNXRtaTdselBKbnYzSHFDL1NpNmNWM2kyc1Yyd3RPVURJV3Y5L1BIc3E3Wi8KMkZaODEyd3Z2R3dsY1kxYk8zTkJZZlJSTHhjQjljK3NtUlJGNDRCZ3dnSHVvaUtsbWFZVWVKL0QvaTBQZS9HZgpJYlJ0UTlIRTkxdDMySE1hTU9YKzR2c3lsbWJMQ0grcVlFSEg3SmdIVFc1azlhL0RDNHRrNXlXU2doWDBPYVFjCmw5ZitCU0JaUnR3dG92SW9WcnQ0L05WVEhyZmladzNZQkhQcUZodUd2dllja2R4U244NnhCZitlYjQ0Y2RqTWEKUTArWk5DQzU2VFFUOVkvcGNVaTFtVXNYSTJBbVZlT294aTZ5NWdQSFpZOUdoUUNhSVhvbjJaZ0NyM0dXazhXdgpaV0J5Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+      service:
+        name: clusterresourcequota
+        namespace: "clusterresourcequota"
+        path: /validate-resourcequota-remove
+    failurePolicy: Fail
+    name: validate.resourcequota.remove.xiaoshiai.cn
+    namespaceSelector:
+      matchExpressions:
+        - key: app.xiaoshiai.cn/tenant
+          operator: Exists
+    objectSelector:
+      matchExpressions:
+        - key: clusterresourcequota.xiaoshiai.cn
+          operator: Exists
+    rules:
+      - apiGroups:
+          - "quota.xiaoshiai.cn"
+        apiVersions:
+          - v1
+        operations:
+          - UPDATE
+          - DELETE
+        resources:
+          - resourcequotas
+    sideEffects: None

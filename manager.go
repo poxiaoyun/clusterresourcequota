@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"os"
 	"strconv"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	resourcequotaapi "k8s.io/apiserver/pkg/admission/plugin/resourcequota/apis/resourcequota"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -27,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"sigs.k8s.io/yaml"
 	thisquotav1 "xiaoshiai.cn/clusterresourcequota/apis/quota/v1"
 	thisclientset "xiaoshiai.cn/clusterresourcequota/generated/clientset/versioned"
 	thisinformers "xiaoshiai.cn/clusterresourcequota/generated/informers/externalversions"
@@ -50,6 +53,10 @@ type Options struct {
 	Metrics        *MetricsOptions        `json:"metrics,omitempty"`
 	ResyncPeriod   time.Duration          `json:"resyncPeriod,omitempty" description:"The resync period of informer factories"`
 	Probe          *ProbeOptions          `json:"probe,omitempty"`
+	// ResourceQuotaConfigFile is an optional path to a YAML file that contains
+	// a configuration for the resourcequota admission plugin (k8s.io/apiserver/pkg/admission/plugin/resourcequota.Configuration).
+	// If provided, the configuration will be loaded at startup and passed to the admission plugin.
+	ResourceQuotaConfigFile string `json:"resourceQuotaConfigFile,omitempty" description:"Path to resourcequota admission plugin configuration YAML file"`
 }
 
 type WebhookOptions struct {
@@ -97,6 +104,14 @@ func NewDefaultOptions() *Options {
 }
 
 func Run(ctx context.Context, options *Options) error {
+	cfg, err := config.GetConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get config: %w", err)
+	}
+	return RunWithConfig(ctx, cfg, options)
+}
+
+func RunWithConfig(ctx context.Context, cfg *rest.Config, options *Options) error {
 	log.SetLogger(liblog.DefaultLogger)
 	setupLog := log.Log.WithName("setup")
 
@@ -124,10 +139,7 @@ func Run(ctx context.Context, options *Options) error {
 	if options.Probe.Enabled {
 		managerOptions.HealthProbeBindAddress = options.Probe.Addr
 	}
-	cfg, err := config.GetConfig()
-	if err != nil {
-		return fmt.Errorf("failed to get config: %w", err)
-	}
+
 	mgr, err := manager.New(cfg, managerOptions)
 	if err != nil {
 		setupLog.Error(err, "unable to create manager")
@@ -152,7 +164,12 @@ func Setup(ctx context.Context, mgr ctrl.Manager, options *Options) error {
 	if err != nil {
 		return err
 	}
-	resourceQuotaController, resourceQuotaAdmission, err := NewResourceQuota(ctx, context)
+	// load optional resourcequota admission configuration from file path provided in options
+	rqConfig, err := GetResourceQuotaConfig(ctx, options.ResourceQuotaConfigFile)
+	if err != nil {
+		return fmt.Errorf("load resource quota config: %w", err)
+	}
+	resourceQuotaController, resourceQuotaAdmission, err := NewResourceQuota(ctx, context, rqConfig)
 	if err != nil {
 		return fmt.Errorf("create resource quota admission: %w", err)
 	}
@@ -169,6 +186,36 @@ func Setup(ctx context.Context, mgr ctrl.Manager, options *Options) error {
 			})
 
 	return nil
+}
+
+func GetResourceQuotaConfig(ctx context.Context, path string) (*resourcequotaapi.Configuration, error) {
+	if path == "" {
+		return DefaultResourceQuotaConfig(), nil
+	}
+	log.Log.WithName("setup").Info("loading resourcequota config file", "path", path)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read resourcequota config file: %w", err)
+	}
+	var cfg resourcequotaapi.Configuration
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return nil, fmt.Errorf("unmarshal resourcequota config file: %w", err)
+	}
+	return &cfg, nil
+}
+
+func DefaultResourceQuotaConfig() *resourcequotaapi.Configuration {
+	return &resourcequotaapi.Configuration{
+		LimitedResources: []resourcequotaapi.LimitedResource{
+			{
+				APIGroup: "v1",
+				Resource: "pods",
+				// all resources on pods are covered, it means that if any resource is requested on pod,
+				// but not defined in ResourceQuota, it will be rejected
+				MatchContains: []string{"*"},
+			},
+		},
+	}
 }
 
 func TrimMetadata(obj any) (any, error) {
