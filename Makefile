@@ -55,8 +55,8 @@ build-binary:
 	$(call build-binary,linux,arm64)
 
 build-helm:
-	helm dependency build charts/clusterresourcequota
-	helm package charts/clusterresourcequota --version=${VERSION} --app-version=${VERSION} --destination ${BIN_DIR}
+	helm dependency build deploy/clusterresourcequota
+	helm package deploy/clusterresourcequota --version=${VERSION} --app-version=${VERSION} --destination ${BIN_DIR}
 
 .PHONY: release
 release:release-image release-helm
