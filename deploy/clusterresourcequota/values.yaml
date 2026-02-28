@@ -15,7 +15,7 @@ clusterresourcequota:
   image:
     registry: registry.cn-hangzhou.aliyuncs.com
     repository: xiaoshiai/clusterresourcequota
-    tag: latest
+    tag: "v1.0.0"
     pullPolicy: ""
     pullSecrets: []
   replicaCount: 1

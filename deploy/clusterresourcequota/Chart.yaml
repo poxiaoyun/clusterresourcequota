@@ -1,8 +1,8 @@
 apiVersion: v2
-appVersion: 0.0.0
+appVersion: 1.0.0
 name: clusterresourcequota
 description: A Helm chart for ClusterResourceQuota Admission
-version: 0.0.0
+version: 1.0.0
 dependencies:
   - name: common
     version: 2.x.x
