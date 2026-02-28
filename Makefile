@@ -56,7 +56,7 @@ build-binary:
 
 build-helm:
 	helm dependency build deploy/clusterresourcequota
-	helm package deploy/clusterresourcequota --version=${VERSION} --app-version=${VERSION} --destination ${BIN_DIR}
+	helm package deploy/clusterresourcequota --version=${VERSION} --app-version=${GIT_VERSION} --destination ${BIN_DIR}
 
 .PHONY: release
 release:release-image release-helm
@@ -66,7 +66,7 @@ release-image:
 	docker buildx build --platform=${BUILDX_PLATFORMS} --push -t $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$(IMAGE_NAME):$(GIT_VERSION) -f Dockerfile ${BIN_DIR}
 
 release-helm: build-helm
-	helm push ${BIN_DIR}/clusterresourcequota-${VERSION}.tgz oci://${IMAGE_REPOSITORY}
+	helm push ${BIN_DIR}/clusterresourcequota-${VERSION}.tgz oci://${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}
 
 login:
 	docker login ${IMAGE_REGISTRY} -u ${REGISTRY_USERNAME} -p ${REGISTRY_PASSWORD}

@@ -8,10 +8,11 @@ Return the proper image name
 {{- end -}}
 
 {{/*
-Return the proper image name
+Return the proper image name.
+If .Values.clusterresourcequota.image.tag is empty, it falls back to .Chart.AppVersion.
 */}}
 {{- define "clusterresourcequota.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.clusterresourcequota.image "root" . "global" .Values.global) }}
+{{ include "common.images.image" (dict "imageRoot" .Values.clusterresourcequota.image "root" . "global" .Values.global "chart" .Chart) }}
 {{- end -}}
 
 {{/*

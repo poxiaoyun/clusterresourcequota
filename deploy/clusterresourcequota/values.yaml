@@ -15,7 +15,8 @@ clusterresourcequota:
   image:
     registry: registry.cn-hangzhou.aliyuncs.com
     repository: xiaoshiai/clusterresourcequota
-    tag: "v1.0.0"
+    # Overrides the image tag. Defaults to Chart.AppVersion if empty.
+    tag: ""
     pullPolicy: ""
     pullSecrets: []
   replicaCount: 1
