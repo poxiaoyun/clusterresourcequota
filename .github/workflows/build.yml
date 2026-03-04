@@ -6,6 +6,10 @@ on:
     tags: ["v*.*.*"]
   pull_request:
     branches: ["main"]
+
+env:
+  GIT_VERSION: ${{ github.ref_name }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,22 +20,25 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      # Build binary
+      # Build
       - name: Build
         run: make build
+
       # Release
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v2
+
       - name: Login to Registry
-        run: make login
         env:
           REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: make login
+
       - name: Release Docker Image
         run: make release-image
-      # # Release Helm chart
-      # - name: Release Helm Chart
-      #   run: make release-helm
-      #   if: startsWith(github.ref, 'refs/tags/')
+      # Release Helm chart
+      - name: Release Helm Chart
+        if: github.ref_type == 'tag'
+        run: make release-helm

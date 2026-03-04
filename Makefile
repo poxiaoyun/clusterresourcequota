@@ -65,12 +65,14 @@ BUILDX_PLATFORMS?=linux/amd64,linux/arm64
 release-image:
 	docker buildx build --platform=${BUILDX_PLATFORMS} --push -t $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$(IMAGE_NAME):$(GIT_VERSION) -f Dockerfile ${BIN_DIR}
 
+HELM_OCI_REGISTRY?=registry.xiaoshiai.cn
+.PHONY: release-helm
 release-helm: build-helm
-	helm push ${BIN_DIR}/clusterresourcequota-${VERSION}.tgz oci://${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}
+	helm push ${BIN_DIR}/clusterresourcequota-${VERSION}.tgz oci://${HELM_OCI_REGISTRY}/charts
 
 login:
 	docker login ${IMAGE_REGISTRY} -u ${REGISTRY_USERNAME} -p ${REGISTRY_PASSWORD}
-	helm registry login ${IMAGE_REGISTRY} -u ${REGISTRY_USERNAME} -p ${REGISTRY_PASSWORD}
+	helm registry login ${HELM_OCI_REGISTRY} -u ${REGISTRY_USERNAME} -p ${REGISTRY_PASSWORD}
 
 CONTROLLER_GEN = ${BIN_DIR}/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
