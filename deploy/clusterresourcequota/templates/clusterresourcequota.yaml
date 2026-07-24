@@ -83,6 +83,7 @@ spec:
             - --webhook-enabled
             - --webhook-certdir=/certs
             - --webhook-addr=:{{ .Values.clusterresourcequota.containerPorts.https }}
+            - --webhook-acceleratorvendor={{ .Values.admissionWebhooks.acceleratorVendor }}
             {{- end }}
             {{- if .Values.clusterresourcequota.metrics.enabled }}
             - --metrics-enabled

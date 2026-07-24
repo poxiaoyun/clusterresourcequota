@@ -132,6 +132,7 @@ webhooks:
       resources:
         - resourcequotas
     sideEffects: None
+{{- if eq .Values.admissionWebhooks.acceleratorVendor "nvidia" }}
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
@@ -149,4 +150,36 @@ metadata:
     {{- if .Values.commonAnnotations }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
     {{- end }}
+webhooks:
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      {{- if not .Values.admissionWebhooks.useCertManager }}
+      caBundle: {{ $ca.Cert | b64enc | quote }}
+      {{- end }}
+      service:
+        name: {{ include "clusterresourcequota.fullname" . }}
+        namespace: {{ .Release.Namespace | quote }}
+        path: /mutate-pod-gpu-isolation
+    failurePolicy: {{ .Values.admissionWebhooks.failurePolicy }}
+    matchPolicy: Equivalent
+    name: mutate.pod-gpu-isolation.xiaoshiai.cn
+    {{- if .Values.admissionWebhooks.namespaceSelector }}
+    namespaceSelector:
+      {{- toYaml .Values.admissionWebhooks.namespaceSelector | nindent 6 }}
+    {{- end }}
+    reinvocationPolicy: IfNeeded
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+          - pods/ephemeralcontainers
+    sideEffects: None
+{{- end }}
 {{- end }}

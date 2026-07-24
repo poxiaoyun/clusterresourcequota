@@ -60,9 +60,10 @@ type Options struct {
 }
 
 type WebhookOptions struct {
-	Enabled bool   `json:"enabled,omitempty" description:"Enable webhook"`
-	Addr    string `json:"addr,omitempty" description:"The address the webhook server binds to."`
-	CertDir string `json:"certDir,omitempty" description:"The directory that contains the server key and certificate."`
+	Enabled           bool   `json:"enabled,omitempty" description:"Enable webhook"`
+	Addr              string `json:"addr,omitempty" description:"The address the webhook server binds to."`
+	CertDir           string `json:"certDir,omitempty" description:"The directory that contains the server key and certificate."`
+	AcceleratorVendor string `json:"acceleratorVendor,omitempty" description:"Accelerator vendor of the cluster, supported values are nvidia and huawei."`
 }
 
 type LeaderElectionOptions struct {
@@ -87,9 +88,10 @@ func NewDefaultOptions() *Options {
 			ID:      "clusterresourcequota" + common.GroupPrefix,
 		},
 		Webhook: &WebhookOptions{
-			Enabled: true,
-			Addr:    ":8443",
-			CertDir: "certs",
+			Enabled:           true,
+			Addr:              ":8443",
+			CertDir:           "certs",
+			AcceleratorVendor: AcceleratorVendorNVIDIA,
 		},
 		Metrics: &MetricsOptions{
 			Enabled: true,
@@ -156,6 +158,9 @@ func RunWithConfig(ctx context.Context, cfg *rest.Config, options *Options) erro
 }
 
 func Setup(ctx context.Context, mgr ctrl.Manager, options *Options) error {
+	if err := ValidateAcceleratorVendor(options.Webhook.AcceleratorVendor); err != nil {
+		return err
+	}
 	if err := NewClusterResourceQuota(ctx, mgr); err != nil {
 		return fmt.Errorf("create cluster resource quota controller: %w", err)
 	}
@@ -183,6 +188,11 @@ func Setup(ctx context.Context, mgr ctrl.Manager, options *Options) error {
 					Validation: resourceQuotaAdmission,
 					Schema:     cli.Scheme(),
 				},
+			})
+	mgr.GetWebhookServer().
+		Register("/mutate-pod-gpu-isolation",
+			&admission.Webhook{
+				Handler: NewPodGPUIsolationAdmission(options.Webhook.AcceleratorVendor, mgr.GetScheme()),
 			})
 
 	return nil
